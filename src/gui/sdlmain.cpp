@@ -120,7 +120,7 @@ typedef void (APIENTRYP PFNGLVERTEXATTRIBPOINTERPROC) (GLuint index, GLint size,
 
 /* Apple defines these functions in their GL header (as core functions)
  * so we can't use their names as function pointers. We can't link
- * directly as some platforms may not have them. So they get their own 
+ * directly as some platforms may not have them. So they get their own
  * namespace here to keep the official names but avoid collisions.
  */
 namespace gl2 {
@@ -343,7 +343,7 @@ void OPENGL_ERROR(const char* message) {
 		LOG_MSG("%X",r);
 	} while ( (r=glGetError()) != GL_NO_ERROR);
 }
-#else 
+#else
 void OPENGL_ERROR(const char*) {
 	return;
 }
@@ -353,7 +353,7 @@ void OPENGL_ERROR(const char*) {
 #define SETMODE_SAVES 1  //Don't set Video Mode if nothing changes.
 #define SETMODE_SAVES_CLEAR 1 //Clear the screen, when the Video Mode is reused
 //Restart graphics subsystem of SDL when switching windowed and fullscreen in OPENGL
-//#define SETMODE_RESTARTS_SUBSYSTEM 1 
+//#define SETMODE_RESTARTS_SUBSYSTEM 1
 
 SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 #if SETMODE_SAVES
@@ -399,7 +399,7 @@ SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 	}
 #endif //WIN32
 #endif //SETMODE_SAVES
-	
+
 
 #if C_OPENGL
 #ifdef SETMODE_RESTARTS_SUBSYSTEM
@@ -410,8 +410,8 @@ SDL_Surface* SDL_SetVideoMode_Wrap(int width,int height,int bpp,Bit32u flags){
 		if (fx & SDL_FULLSCREEN) {
 			if (!(flags & SDL_FULLSCREEN)) {
 				//RESTART FOR MACS
-				
-				//MAYBE move this above the Videomode call above and do not do the setvideomode below. 
+
+				//MAYBE move this above the Videomode call above and do not do the setvideomode below.
 				//Yes this will mess up the title bar and icon. But it is for trying...
 
 				LOG_MSG("HIT RESTART");
@@ -514,11 +514,11 @@ static void PauseDOSBox(bool pressed) {
 			case SDL_KEYDOWN:   // Must use Pause/Break Key to resume.
 			case SDL_KEYUP:
 			if(event.key.keysym.sym == SDLK_PAUSE) {
-				SDLMod outkeymod = (event.key.keysym.mod);
+				auto outkeymod = (event.key.keysym.mod);
 				if (inkeymod != outkeymod) {
 					KEYBOARD_ClrBuffer();
 					MAPPER_LosingFocus();
-					//Not perfect if the pressed alt key is switched, but then we have to 
+					//Not perfect if the pressed alt key is switched, but then we have to
 					//insert the keys into the mapper or create/rewrite the event and push it.
 					//Which is tricky due to possible use of scancodes.
 				}
@@ -909,7 +909,7 @@ dosurface:
 		if (!(flags & GFX_CAN_32) || (flags & GFX_RGBONLY)) goto dosurface;
 		if (!GFX_SetupSurfaceScaled(0,0)) goto dosurface;
 		sdl.overlay = SDL_CreateYUVOverlay(width * 2, height, SDL_UYVY_OVERLAY, sdl.surface);
-		
+
 		if (sdl.overlay && SDL_LockYUVOverlay(sdl.overlay) == 0) {
 			//Need to lock in order to get real pitchdata (at least on windows with dx backend)
 			if (sdl.overlay->pitches[0] < 4 * width) {
@@ -1061,7 +1061,7 @@ dosurface:
 		}
 		sdl.opengl.pitch=width*4;
 
-		if(sdl.clip.x ==0 && sdl.clip.y ==0 && sdl.desktop.fullscreen && !sdl.desktop.full.fixed && (sdl.clip.w != sdl.surface->w || sdl.clip.h != sdl.surface->h)) { 
+		if(sdl.clip.x ==0 && sdl.clip.y ==0 && sdl.desktop.fullscreen && !sdl.desktop.full.fixed && (sdl.clip.w != sdl.surface->w || sdl.clip.h != sdl.surface->h)) {
 //			LOG_MSG("attempting to fix the centering to %d %d %d %d",(sdl.surface->w-sdl.clip.w)/2,(sdl.surface->h-sdl.clip.h)/2,sdl.clip.w,sdl.clip.h);
 			glViewport((sdl.surface->w-sdl.clip.w)/2,(sdl.surface->h-sdl.clip.h)/2,sdl.clip.w,sdl.clip.h);
 		} else {
@@ -1667,7 +1667,7 @@ static void GUI_StartUp(Section * sec) {
 		int sdl_h = vidinfo->current_h;
 		int win_w = GetSystemMetrics(SM_CXSCREEN);
 		int win_h = GetSystemMetrics(SM_CYSCREEN);
-		if (sdl_w != win_w && sdl_h != win_h) 
+		if (sdl_w != win_w && sdl_h != win_h)
 			LOG_MSG("Windows dpi/blurry apps scaling detected! The screen might be too large or not\n"
 			        "show properly, please see the DOSBox options file (fullresolution) for details.\n");
 		}
@@ -1680,7 +1680,7 @@ static void GUI_StartUp(Section * sec) {
 			sdl.desktop.full.height = vidinfo->current_h;
 		}
 	}
-	
+
 	if (!sdl.desktop.window.width || !sdl.desktop.window.height) {
 		if (vidinfo && windowspercentage) {
 			sdl.desktop.window.width = ((vidinfo->current_w*windowspercentage)/3200)*32;
@@ -2220,7 +2220,7 @@ void Config_Add_SDL() {
 		"ddraw",
 #endif
 		0 };
- 	
+
 
 #if C_OPENGL && defined(MACOSX)
 	Pstring = sdl_sec->Add_string("output",Property::Changeable::Always,"opengl");
@@ -2537,9 +2537,13 @@ int main(int argc, char* argv[]) {
 	 */
 	putenv(const_cast<char*>("SDL_DISABLE_LOCK_KEYS=1"));
 #endif
-	// Don't init timers, GetTicks seems to work fine and they can use a fair amount of power (Macs again) 
+	// Don't init timers, GetTicks seems to work fine and they can use a fair amount of power (Macs again)
 	// Please report problems with audio and other things.
+#ifdef EMSCRIPTEN
+        if ( SDL_Init( SDL_INIT_AUDIO|SDL_INIT_VIDEO | /*SDL_INIT_TIMER | SDL_INIT_CDROM */ 0
+#else
 	if ( SDL_Init( SDL_INIT_AUDIO|SDL_INIT_VIDEO | /*SDL_INIT_TIMER |*/ SDL_INIT_CDROM
+#endif
 		|SDL_INIT_NOPARACHUTE
 		) < 0 ) E_Exit("Can't init SDL %s",SDL_GetError());
 	sdl.inited = true;
@@ -2721,3 +2725,11 @@ void client_warn(const char* tag, const char* message) {
 void client_error(const char* tag, const char* message) {
   printf("error[%s]: %s\n", tag, message);
 }
+
+#ifndef EMSCRIPTEN
+void client_tick() {
+}
+extern "C" const char * SDLNet_GetError(void) {
+  return nullptr;
+}
+#endif
