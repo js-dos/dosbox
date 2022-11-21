@@ -19,6 +19,7 @@
 #ifndef DOSBOX_TIMER_H
 #define DOSBOX_TIMER_H
 
+#include <jsdos-asyncify.h>
 
 #define PIT_TICK_RATE 1193182
 
@@ -31,10 +32,6 @@ mstime GetTicks();
 #include <SDL/SDL.h>
 #define GetTicks() SDL_GetTicks()
 #endif
-
-
-void DelayWithYield(int ms);
-void Delay(int ms);
 
 typedef void (*TIMER_TickHandler)(void);
 

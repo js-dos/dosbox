@@ -1845,7 +1845,7 @@ Bitu DEBUG_Loop(void) {
 	Bit32u oldEIP	= reg_eip;
 	PIC_runIRQs();
 #if defined(JSDOS)
-	DelayWithYield(1);
+	asyncify_sleep(1);
 #else
 	SDL_Delay(1);
 #endif

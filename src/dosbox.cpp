@@ -24,8 +24,6 @@
 #include <unistd.h>
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
-#else
-#include <emscripten_stub.h>
 #endif
 #include "dosbox.h"
 #include "debug.h"
@@ -139,6 +137,7 @@ static Bit32u ticksAdded;
 Bit32s ticksDone;
 Bit32u ticksScheduled;
 bool ticksLocked;
+void increaseticks();
 
 
 #ifdef JSDOS
@@ -148,17 +147,11 @@ EM_JS(bool, isNormalState, (), {
   return Asyncify.state === 0 ? 1 : 0;
 });
 #else
+extern void client_tick();
+
 bool isNormalState() {
   return true;
 }
-#endif
-#endif
-
-void increaseticks();
-
-#if defined(JSDOS)
-#ifndef EMSCRIPTEN
-extern void client_tick();
 #endif
 #endif
 
@@ -170,7 +163,7 @@ static Bitu Normal_Loop(void) {
 #endif
     static mstime lastSleepTime = GetTicks();
     if (GetTicks() - lastSleepTime > LOOP_EXECUTION_TIME) {
-        DelayWithYield(0);
+        asyncify_sleep(0);
         lastSleepTime = GetTicks();
     }
 #endif
@@ -197,7 +190,7 @@ static Bitu Normal_Loop(void) {
 }
 
 //For trying other delays
-#define wrap_delay(a) DelayWithYield(a);
+#define wrap_delay(a) asyncify_sleep(a);
 
 void increaseticks() { //Make it return ticksRemain and set it in the function above to remove the global variable.
 	if (GCC_UNLIKELY(ticksLocked)) { // For Fast Forward Mode
