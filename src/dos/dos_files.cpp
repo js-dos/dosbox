@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
-#include <sstream>
-#include <protocol.h>
+
+#include <jsdos-support.h>
 
 #include "dosbox.h"
 #include "bios.h"
@@ -404,51 +404,6 @@ bool DOS_ReadFile(Bit16u entry,Bit8u * data,Bit16u * amount,bool fcb) {
 	return ret;
 }
 
-void client_stdout_wrapper(const char* data, uint32_t amount) {
-  static std::string line;
-  static double time[2] = { 0.0, 0.0 };
-  static int timeIndex = 0;
-  static bool reportRuns = false;
-
-  if (reportRuns) {
-    reportRuns = false;
-    auto dtime = time[1] - time[0];
-    double runs = 0;
-
-    std::istringstream stream(std::string(data, amount));
-    stream >> runs;
-
-    std::string message = "dhry2: " + std::to_string((long) runs) +
-                          " " + std::to_string(dtime) +
-                          " " + std::to_string(runs * 1000 / dtime / 1757);
-
-    client_stdout(message.c_str(), message.length());
-    return;
-  }
-
-  if (amount >= 7 &&
-      data[0] == '~' && data[1] == '>' &&
-      data[2] == 'd' && data[3] == 't' &&
-      data[4] == 'i' && data[5] == 'm' &&
-      data[6] == 'e') {
-    time[timeIndex] = GetMsPassedFromStart();
-    timeIndex = (timeIndex + 1) % 2;
-    reportRuns = timeIndex == 0;
-  } else {
-    for (int i = 0; i < amount; ++i) {
-      char next = data[i];
-      if (isascii(next) || next == '\n') {
-          line += next;
-      }
-
-	  if (next == '\n') {
-      	client_stdout(line.c_str(), line.length());
-		line.clear();
-	  }
-    }
-  }
-}
-
 bool DOS_WriteFile(Bit16u entry,Bit8u * data,Bit16u * amount,bool fcb) {
 	Bit32u handle = fcb?entry:RealHandle(entry);
 	if (handle>=DOS_FILES) {
@@ -468,7 +423,7 @@ bool DOS_WriteFile(Bit16u entry,Bit8u * data,Bit16u * amount,bool fcb) {
 	Bit16u towrite=*amount;
 
 	if (entry == STDOUT && towrite > 0) {
-            client_stdout_wrapper(reinterpret_cast<const char *>(data), towrite);
+            jsdos::cout(reinterpret_cast<const char *>(data), towrite);
 	}
 
 	bool ret=Files[handle]->Write(data,&towrite);
