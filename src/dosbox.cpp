@@ -343,7 +343,7 @@ void DOSBOX_SetNormalLoop() {
 void DOSBOX_RunMachine(void){
 	Bitu ret;
 	do {
-            if (jsdos::asyncifyNormalRun() && jsdos::isExitRequested()) {
+            if (jsdos::isExitRequested()) {
               break;
             }
             ret=(*loop)();
