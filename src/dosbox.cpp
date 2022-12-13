@@ -141,17 +141,8 @@ void increaseticks();
 
 
 #ifdef JSDOS
-constexpr auto LOOP_EXECUTION_TIME = 1000 / 60;
-#ifdef EMSCRIPTEN
-EM_JS(bool, isNormalState, (), {
-  return Asyncify.state === 0 ? 1 : 0;
-});
-#else
+#ifndef EMSCRIPTEN
 extern void client_tick();
-
-bool isNormalState() {
-  return true;
-}
 #endif
 #endif
 
@@ -161,11 +152,7 @@ static Bitu Normal_Loop(void) {
 #ifndef EMSCRIPTEN
 	client_tick();
 #endif
-    static mstime lastSleepTime = GetTicks();
-    if (GetTicks() - lastSleepTime > LOOP_EXECUTION_TIME) {
-        asyncify_sleep(0);
-        lastSleepTime = GetTicks();
-    }
+	asyncify_sleep(0);
 #endif
     while (1) {
         if (PIC_RunQueue()) {
@@ -356,7 +343,7 @@ void DOSBOX_SetNormalLoop() {
 void DOSBOX_RunMachine(void){
 	Bitu ret;
 	do {
-            if (isNormalState() && (jsdos::isExitRequested())) {
+            if (jsdos::asyncifyNormalRun() && jsdos::isExitRequested()) {
               break;
             }
             ret=(*loop)();
