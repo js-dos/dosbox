@@ -47,6 +47,7 @@
 #include "pci_bus.h"
 
 #include <jsdos-support.h>
+#include <protocol.h>
 
 #if 1 // !SDL_VERSION_ATLEAST(2,0,0)
 #define SDL_TICKS_PASSED(A, B)  ((Sint32)((B) - (A)) <= 0)
@@ -139,19 +140,10 @@ Bit32u ticksScheduled;
 bool ticksLocked;
 void increaseticks();
 
-
-#ifdef JSDOS
-#ifndef EMSCRIPTEN
-extern void client_tick();
-#endif
-#endif
-
 static Bitu Normal_Loop(void) {
 	Bits ret;
 #if defined(JSDOS)
-#ifndef EMSCRIPTEN
 	client_tick();
-#endif
 	asyncify_sleep(0);
 #endif
     while (1) {
