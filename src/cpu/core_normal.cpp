@@ -152,6 +152,7 @@ Bits CPU_Core_Normal_Run(void) {
 
 Bits CPU_Core_Normal_Run_Impl(void) {
 	while (CPU_Cycles-->0) {
+        jsdos::incCycles();
 		LOADIP;
 		core.opcode_index=cpu.code.big*0x200;
 		core.prefixes=cpu.code.big;
