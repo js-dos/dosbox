@@ -169,7 +169,10 @@ static Bitu Normal_Loop(void) {
 }
 
 //For trying other delays
-#define wrap_delay(a) asyncify_sleep(a);
+#ifndef JSDOS
+#define wrap_delay(a) SLD_Delay(a);
+#endif
+
 
 void increaseticks() { //Make it return ticksRemain and set it in the function above to remove the global variable.
 	if (GCC_UNLIKELY(ticksLocked)) { // For Fast Forward Mode
@@ -182,19 +185,19 @@ void increaseticks() { //Make it return ticksRemain and set it in the function a
 		return;
 	}
 	
+#ifndef JSDOS
 	static Bit32s lastsleepDone = -1;
 	static Bitu sleep1count = 0;
+#endif
 
 	Bit32u ticksNew;
 	ticksNew = GetTicks();
 	ticksScheduled += ticksAdded;
 	if (ticksNew <= ticksLast) { //lower should not be possible, only equal.
-#if true
-	ticksAdded = 0;
-        ticksDone = 0;
-        return;
-#endif
-
+#ifdef JSDOS
+		asyncify_sleep(1, true);
+		Bit32s timeslept = std::max((Bit32s) (GetTicks() - ticksNew), Bit32s(1));
+#else
 		if (!CPU_CycleAutoAdjust || CPU_SkipCycleAutoAdjust || sleep1count < 3) {
 			wrap_delay(1);
 		} else {
@@ -208,10 +211,12 @@ void increaseticks() { //Make it return ticksRemain and set it in the function a
 			wrap_delay(sleeppattern[sleepindex++]);
 			sleepindex %= sizeof(sleeppattern) / sizeof(sleeppattern[0]);
 		}
+
 		Bit32s timeslept = GetTicks() - ticksNew;
 		// Count how many times in the current block (of 250 ms) the time slept was 1 ms
 		if (CPU_CycleAutoAdjust && !CPU_SkipCycleAutoAdjust && timeslept == 1) sleep1count++;
 		lastsleepDone = ticksDone;
+#endif
 
 		// Update ticksDone with the time spent sleeping
 		ticksDone -= timeslept;
@@ -312,8 +317,10 @@ void increaseticks() { //Make it return ticksRemain and set it in the function a
 		CPU_IODelayRemoved = 0;
 		ticksDone = 0;
 		ticksScheduled = 0;
+#ifndef JSDOS
 		lastsleepDone = -1;
 		sleep1count = 0;
+#endif
 	} else if (ticksAdded > 15) {
 		/* ticksAdded > 15 but ticksScheduled < 5, lower the cycles
 		   but do not reset the scheduled/done ticks to take them into
