@@ -2730,6 +2730,6 @@ void client_error(const char* tag, const char* message) {
 void client_tick() {
 }
 extern "C" const char * SDLNet_GetError(void) {
-  return nullptr;
+  return 0;
 }
 #endif
