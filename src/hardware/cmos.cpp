@@ -137,6 +137,12 @@ static Bitu cmos_readreg(Bitu port,Bitu iolen) {
 
 	/* Convert it to local time representation. */
 	loctime = localtime (&curtime);
+#ifdef JSDOS
+    loctime->tm_mday = 25;
+    loctime->tm_wday = 3;
+    loctime->tm_mon = 6;
+    loctime->tm_year = 1998 - 1900;
+#endif
 
 	switch (cmos.reg) {
 	case 0x00:		/* Seconds */

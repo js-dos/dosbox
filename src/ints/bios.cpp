@@ -520,9 +520,16 @@ static void BIOS_HostTimeSync() {
 	loctime->tm_year = 2007 - 1900;
 	*/
 
+
+#ifdef JSDOS
+    dos.date.day=25;
+    dos.date.month=6; 
+    dos.date.year=1998;
+#else
 	dos.date.day=(Bit8u)loctime->tm_mday;
 	dos.date.month=(Bit8u)loctime->tm_mon+1;
 	dos.date.year=(Bit16u)loctime->tm_year+1900;
+#endif
 
 	Bit32u ticks=(Bit32u)(((double)(
 		loctime->tm_hour*3600*1000+
