@@ -148,7 +148,9 @@ static Bitu Normal_Loop(void) {
 #endif
     while (1) {
         if (PIC_RunQueue()) {
-			ret = (*cpudecoder)();
+            auto cycles = CPU_Cycles;
+            ret = (*cpudecoder)();
+            jsdos::incCycles(cycles - CPU_Cycles);
 			if (GCC_UNLIKELY(ret<0)) return 1;
 			if (ret>0) {
 				if (GCC_UNLIKELY(ret >= CB_MAX)) return 0;
