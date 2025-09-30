@@ -69,8 +69,44 @@
 #pragma pack(1)
 #endif
 
+#if defined(JSDOS) && !defined(JSDOS_SDL)
+typedef uint32_t Uint32;
+typedef uint16_t Uint16;
+typedef uint8_t Uint8;
+typedef struct {
+  uint32_t host;            /* 32-bit IPv4 host address */
+  uint16_t port;            /* 16-bit protocol port */
+} IPaddress;
+namespace {
+__inline__ void SDLNet_Write16(Uint16 value, void *areap) {
+  Uint8 *area = (Uint8 *)areap;
+  area[0] = (value >> 8) & 0xFF;
+  area[1] = value & 0xFF;
+}
+
+__inline__ void SDLNet_Write32(Uint32 value, void *areap) {
+  Uint8 *area = (Uint8 *)areap;
+  area[0] = (value >> 24) & 0xFF;
+  area[1] = (value >> 16) & 0xFF;
+  area[2] = (value >> 8) & 0xFF;
+  area[3] = value & 0xFF;
+}
+
+__inline__ Uint16 SDLNet_Read16(void *areap) {
+  Uint8 *area = (Uint8 *)areap;
+  return ((Uint16)area[0]) << 8 | ((Uint16)area[1]);
+}
+
+__inline__ Uint32 SDLNet_Read32(const void *areap) {
+  const Uint8 *area = (const Uint8 *)areap;
+  return ((Uint32)area[0]) << 24 | ((Uint32)area[1]) << 16 | ((Uint32)area[2]) << 8 | ((Uint32)area[3]);
+}
+
+}  // namespace
+#else
 // For Uint8 type
 #include "SDL_net.h"
+#endif
 
 struct PackedIP {
 	Uint32 host;
