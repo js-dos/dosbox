@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <cmath>
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
 #endif
@@ -148,9 +149,7 @@ static Bitu Normal_Loop(void) {
 #endif
     while (1) {
         if (PIC_RunQueue()) {
-            auto cycles = CPU_Cycles;
             ret = (*cpudecoder)();
-            jsdos::incCycles(cycles - CPU_Cycles);
 			if (GCC_UNLIKELY(ret<0)) return 1;
 			if (ret>0) {
 				if (GCC_UNLIKELY(ret >= CB_MAX)) return 0;
@@ -173,11 +172,16 @@ static Bitu Normal_Loop(void) {
 //For trying other delays
 #ifndef JSDOS
 #define wrap_delay(a) SLD_Delay(a);
+#else
+extern std::string cpuMetrics;
 #endif
 
-
 void increaseticks() { //Make it return ticksRemain and set it in the function above to remove the global variable.
-	if (GCC_UNLIKELY(ticksLocked)) { // For Fast Forward Mode
+#ifdef JSDOS
+  jsdos::increaseticks();
+#endif
+
+  if (GCC_UNLIKELY(ticksLocked)) { // For Fast Forward Mode
 		ticksRemain=5;
 		/* Reset any auto cycle guessing for this frame */
 		ticksLast = GetTicks();
@@ -197,8 +201,12 @@ void increaseticks() { //Make it return ticksRemain and set it in the function a
 	ticksScheduled += ticksAdded;
 	if (ticksNew <= ticksLast) { //lower should not be possible, only equal.
 #ifdef JSDOS
-		asyncify_sleep(1, true);
-		Bit32s timeslept = std::max((Bit32s) (GetTicks() - ticksNew), Bit32s(1));
+	  int32_t timeslept = 0;
+	  while (timeslept < 1) {
+	    asyncify_sleep(1, true);
+	    timeslept = std::round(GetMsPassedFromStart() - ticksNew);
+	  }
+	  cpuMetrics += std::to_string(timeslept) + " ";
 #else
 		if (!CPU_CycleAutoAdjust || CPU_SkipCycleAutoAdjust || sleep1count < 3) {
 			wrap_delay(1);
@@ -290,7 +298,11 @@ void increaseticks() { //Make it return ticksRemain and set it in the function a
 
 		if (new_cmax < CPU_CYCLES_LOWER_LIMIT)
 			new_cmax = CPU_CYCLES_LOWER_LIMIT;
-		/*
+
+#ifdef JSDOS
+	  cpuMetrics += "r" + std::to_string(ratio) +  "|" + std::to_string(new_cmax) + "|" + std::to_string(ticksDone) + "|" + std::to_string(ticksScheduled) + " ";
+#endif
+	  /*
 		LOG(LOG_MISC,LOG_ERROR)("cyclelog: current %06d   cmax %06d   ratio  %05d  done %03d   sched %03d Add %d rr %4.2f",
 			CPU_CycleMax,
 			new_cmax,
