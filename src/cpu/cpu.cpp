@@ -80,6 +80,10 @@ void CPU_Core_Dyn_X86_SetFPUMode(bool dh_fpu);
 void CPU_Core_Dynrec_Init(void);
 void CPU_Core_Dynrec_Cache_Init(bool enable_cache);
 void CPU_Core_Dynrec_Cache_Close(void);
+#elif (C_DYNWASM)
+void CPU_Core_Dynwasm_Init(void);
+void CPU_Core_Dynwasm_Cache_Init(bool enable_cache);
+void CPU_Core_Dynwasm_Cache_Close(void);
 #endif
 
 /* In debug mode exceptions are tested and dosbox exits when 
@@ -1585,6 +1589,11 @@ void CPU_SET_CRX(Bitu cr,Bitu value) {
 					CPU_Core_Dynrec_Cache_Init(true);
 					cpudecoder=&CPU_Core_Dynrec_Run;
 				}
+#elif (C_DYNWASM)
+				if (CPU_AutoDetermineMode&CPU_AUTODETERMINE_CORE) {
+					CPU_Core_Dynwasm_Cache_Init(true);
+					cpudecoder=&CPU_Core_Dynwasm_Run;
+				}
 #endif
 				CPU_AutoDetermineMode<<=CPU_AUTODETERMINE_SHIFT;
 			} else {
@@ -2211,6 +2220,8 @@ public:
 		CPU_Core_Dyn_X86_Init();
 #elif (C_DYNREC)
 		CPU_Core_Dynrec_Init();
+#elif (C_DYNWASM)
+		CPU_Core_Dynwasm_Init();
 #endif
 		MAPPER_AddHandler(CPU_CycleDecrease,MK_f11,MMOD1,"cycledown","Dec Cycles");
 		MAPPER_AddHandler(CPU_CycleIncrease,MK_f12,MMOD1,"cycleup"  ,"Inc Cycles");
@@ -2326,6 +2337,11 @@ public:
 		}
 		else if (core == "dynamic") {
 			cpudecoder=&CPU_Core_Dynrec_Run;
+#elif (C_DYNWASM)
+			CPU_AutoDetermineMode|=CPU_AUTODETERMINE_CORE;
+		}
+		else if (core == "dynamic") {
+			cpudecoder=&CPU_Core_Dynwasm_Run;
 #else
 
 #endif
@@ -2335,6 +2351,8 @@ public:
 		CPU_Core_Dyn_X86_Cache_Init((core == "dynamic") || (core == "dynamic_nodhfpu"));
 #elif (C_DYNREC)
 		CPU_Core_Dynrec_Cache_Init( core == "dynamic" );
+#elif (C_DYNWASM)
+		CPU_Core_Dynwasm_Cache_Init( core == "dynamic" );
 #endif
 
 		CPU_ArchitectureType = CPU_ARCHTYPE_MIXED;
@@ -2397,6 +2415,8 @@ void CPU_ShutDown(Section* sec) {
 	CPU_Core_Dyn_X86_Cache_Close();
 #elif (C_DYNREC)
 	CPU_Core_Dynrec_Cache_Close();
+#elif (C_DYNWASM)
+	CPU_Core_Dynwasm_Cache_Close();
 #endif
 	delete test;
 }
